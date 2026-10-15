@@ -1,0 +1,8 @@
+import React, { useState } from 'react';
+import JournalEntries from './pages/JournalEntries';
+import CreateJournalEntry from './pages/CreateJournalEntry';
+export default function App() {
+  const [view, setView] = useState('list'); const [notice, setNotice] = useState('');
+  const created = (entry) => { setNotice(`Journal entry ${entry?.EntryNumber || ''} created successfully.`); setView('list'); };
+  return <div className="app-shell"><aside className="sidebar"><div className="brand"><span className="brand-icon">F</span><span>FinLedger<small>FINANCE WORKSPACE</small></span></div><div className="nav-label">WORKSPACE</div><button className={`nav-item ${view === 'list' ? 'active' : ''}`} onClick={() => setView('list')}><span>▤</span> Journal entries</button><button className={`nav-item ${view === 'create' ? 'active' : ''}`} onClick={() => setView('create')}><span>＋</span> Create entry</button><div className="sidebar-footer"><span className="status-dot"/> API-powered ledger <small>React · Express · MSSQL</small></div></aside><main className="main-content"><header className="topbar"><span>Financial Journal Entry Management</span><span className="environment"><span className="status-dot"/> Development</span></header><div className="content-area">{notice && <div className="alert success">{notice}<button className="icon-button" onClick={() => setNotice('')} aria-label="Dismiss">×</button></div>}{view === 'create' ? <CreateJournalEntry onCancel={() => setView('list')} onCreated={created} /> : <JournalEntries onCreate={() => { setNotice(''); setView('create'); }} />}</div><footer className="footer">Financial Journal Management <span>Built with React, Node.js, Express and SQL Server</span></footer></main></div>;
+}

@@ -1,0 +1,18 @@
+import React, { useCallback, useEffect, useState } from 'react';
+import { api } from '../api/client';
+import EntryDetails from '../components/EntryDetails';
+const moneyDate = (value) => String(value || '').slice(0, 10);
+export default function JournalEntries({ onCreate }) {
+  const [search, setSearch] = useState(''); const [fromDate, setFromDate] = useState(''); const [toDate, setToDate] = useState('');
+  const [page, setPage] = useState(1); const [data, setData] = useState([]); const [pagination, setPagination] = useState({ page: 1, pageSize: 10, totalRecords: 0, totalPages: 0 });
+  const [loading, setLoading] = useState(false); const [error, setError] = useState(''); const [selected, setSelected] = useState(null);
+  const load = useCallback(async () => { setLoading(true); setError(''); try { const result = await api.entries({ page, pageSize: 10, search, fromDate, toDate }); setData(result.data); setPagination(result.pagination); } catch (e) { setError(e.message); } finally { setLoading(false); } }, [page, search, fromDate, toDate]);
+  useEffect(() => { load(); }, [load]);
+  const submitFilters = (e) => { e.preventDefault(); setPage(1); load(); };
+  return <section><div className="page-heading"><div><p className="eyebrow">GENERAL LEDGER</p><h1>Journal entries</h1><p className="muted">Search, review, and manage recorded transactions.</p></div><button className="primary" onClick={onCreate}>＋ New journal entry</button></div>
+    <form className="filters" onSubmit={submitFilters}><label className="search-field">Search<input value={search} onChange={e => setSearch(e.target.value)} placeholder="Entry number or description" maxLength="100" /></label><label>From date<input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} /></label><label>To date<input type="date" value={toDate} onChange={e => setToDate(e.target.value)} /></label><button className="secondary" type="submit">Apply filters</button><button className="text-button" type="button" onClick={() => {setSearch('');setFromDate('');setToDate('');setPage(1);}}>Clear</button></form>
+    {error && <div className="alert error">{error} <button className="text-button" onClick={load}>Retry</button></div>}
+    <div className="table-card"><div className="table-card-heading"><strong>All entries</strong><span className="muted">{pagination.totalRecords} record(s)</span></div><div className="table-wrap"><table><thead><tr><th>Entry number</th><th>Date</th><th>Description</th><th>Created by</th><th></th></tr></thead><tbody>{loading ? <tr><td colSpan="5" className="empty">Loading entries…</td></tr> : data.length === 0 ? <tr><td colSpan="5" className="empty">No journal entries found. Try changing your filters or create an entry.</td></tr> : data.map(row => <tr key={row.jeh_JournalEntryId}><td><button className="link-button" onClick={() => setSelected(row.jeh_JournalEntryId)}>{row.jeh_EntryNumber}</button></td><td>{moneyDate(row.jeh_EntryDate)}</td><td>{row.jeh_Description}</td><td>{row.jeh_CreatedBy || '—'}</td><td><button className="secondary small" onClick={() => setSelected(row.jeh_JournalEntryId)}>View</button></td></tr>)}</tbody></table></div><div className="pagination"><span className="muted">Page {page} of {Math.max(1, pagination.totalPages)}</span><div><button className="secondary small" disabled={page <= 1 || loading} onClick={() => setPage(p => p - 1)}>Previous</button><button className="secondary small" disabled={page >= pagination.totalPages || loading || pagination.totalPages === 0} onClick={() => setPage(p => p + 1)}>Next</button></div></div></div>
+    {selected && <EntryDetails id={selected} onClose={() => setSelected(null)} />}
+  </section>;
+}
